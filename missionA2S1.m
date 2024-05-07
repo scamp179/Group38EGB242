@@ -10,7 +10,7 @@ load DataA2 audioMultiplexNoisy fs sid;
 %% 1.1 
 % Compute the time vector using the helper function
 t = timevec(0, length(audioMultiplexNoisy)/fs, length(audioMultiplexNoisy));
-
+bacon = dinner;
 % Compute the frequency vector using the helper function
 f = freqvec(fs, length(audioMultiplexNoisy));
 
