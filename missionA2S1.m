@@ -33,12 +33,12 @@ xlabel('Frequency (Hz)');
 ylabel('Magnitude');
 
 
-%% 1.2 
-freq_1 = 23890;
-freq_2 = 39700;
-freq_3 = 55860;
-freq_4 = 71910;
-freq_5 = 87690;
+%% 1.2 modulate and demodulate each audio freq
+freq_1 = 8310;
+freq_2 = 24090;
+freq_3 = 40140;
+freq_4 = 56300;
+freq_5 = 72110;
 % Carrier frequencies identified from the plot
 carrierFreqs = [freq_1,freq_2,freq_3,freq_4,freq_5]; % Frequencies in Hz
 
