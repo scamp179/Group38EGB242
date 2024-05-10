@@ -15,7 +15,7 @@ t = timevec(0, length(audioMultiplexNoisy)/fs, length(audioMultiplexNoisy));
 f = freqvec(fs, length(audioMultiplexNoisy));
 
 % Compute the FFT of the audio signal
-audio_noisy_fft = fftshift(fft(audioMultiplexNoisy)) / fs;
+audio_noisy_fft = fftshift(fft(audioMultiplexNoisy)) / fs; % this in frequency domain
 
 
 figure;
@@ -34,7 +34,7 @@ ylabel('Magnitude');
 
 
 %% 1.2 modulate and demodulate each audio freq
-freq_1 = 8310;
+freq_1 = 8310; % ringing
 freq_2 = 24090;
 freq_3 = 40140;
 freq_4 = 56300;
@@ -47,13 +47,13 @@ for idx = 1:length(carrierFreqs)
     carrier_freq = carrierFreqs(idx);
 
     % cutoff frequency
-    fc = 2800; % try 3500 to compare
+    fc = 2300; % try 3500 to compare
     
     % Demodulate the signal by multiplying it with a cosine wave of the carrier frequency.
     demodulatedSignal = audioMultiplexNoisy .* cos(2*pi*carrier_freq*t);
     
     % Apply a low-pass filter to the demodulated signal to remove high-frequency components
-    audioReceived = lowpass(demodulatedSignal, fc, fs);
+    audioReceived = lowpass(demodulatedSignal, fc, fs, Steepness=0.99);
     
     % Store the demodulated, filtered audio for later use
     audioReceivedCell{idx} = audioReceived;
@@ -91,21 +91,19 @@ end
 % Create an impulse signal
 impulse = zeros(1, length(audio_noisy_fft));  % Vector of zeros
 
-impulse(1) = 1;            % Set the first sample to 1
+impulse(1) = 1;  %sample signal x(t)          % Set the first sample to 1
 
 % Transmit the impulse through the channel
-output = channel(sid, impulse, fs);
-
+output = channel(sid, impulse, fs); %y(t)
+%%
 % Frequency response of the impulse response
-output_fft = fft(output);  
+output_fft = fftshift(fft(output))/fs;  %Y(f)
 
-
-
-% Plotting the frequency responses on the same axes
 figure;
 hold on;
-plot(f, real(output_fft), 'r');  % Channel impulse response in blue
-plot(f, real(audio_noisy_fft), 'b'); % Multiplexed signal in red
+plot(f, real(output_fft), 'b');  % Channel impulse response in blue
+plot(f, real(audio_noisy_fft), 'r'); % Multiplexed signal in red
+
 title('Comparison of Frequency Responses');
 xlabel('Frequency (Hz)');
 ylabel('Magnitude');
@@ -114,18 +112,23 @@ hold off;
 %% 1.4
 
 % Compute the FFT of the impulse response
-H = fft(h, length(audioMultiplexNoisy));  % Use the length of audioMultiplexNoisy for padding
-H_inv = 1 ./ H;  
-H_inv(abs(H) < 1e-3) = 0;  % Avoid division by very small numbers to prevent amplifying noise
+% H_Shift = fftshift(fft(H)) / fs;  % Use the length of audioMultiplexNoisy for padding
+% H_inv = 1 ./ H;  
+% H_inv(abs(H) < 1e-3) = 0;  % Avoid division by very small numbers to prevent amplifying noise
 
 %denoiseAudio = audio_noisy_fft ./ output_fft; not sure if needed
 % Apply the inverse filter
-audioMultiplexNoisy_fft = fft(audioMultiplexNoisy);
+audioMultiplexNoisy_fft = fftshift(fft(audioMultiplexNoisy)) / fs;
 audioFiltered_fft = audioMultiplexNoisy_fft .* H_inv;  % Now the sizes match
-audioFiltered = ifft(audioFiltered_fft);
+audioFiltered = ifft(ifftshift(audioFiltered_fft));
 
+
+audio_noisy_fft / output_fft; % denoised audio
+%impulse_fft = fftshift(fft(impulse))/fs; %X(f)
+
+%H = output_fft .* impulse_fft;
+% Plotting the frequency responses on the same axes
 % Plot the time domain
-t = (0:length(audioFiltered)-1)/fs;
 figure;
 plot(t, audioFiltered);
 title('De-noised Audio - Time Domain');
