@@ -43,11 +43,13 @@ t = linspace(0, 20, samples);  % Time vector from 0 to 20 seconds
 % Create the Step Input
 step_input = ones(size(t_out));  % Step input is 1 for all t
 
+% Convert hexadecimal to normalised RGB triplet
+
 % Plotting
 figure;
-plot(t_out, y, 'b-', 'LineWidth', 2);         % Step response in blue
+plot(t_out, y, 'c-', 'LineWidth', 2);          % Step response in cyan
 hold on;
-plot(t_out, step_input, 'black-', 'LineWidth', 2); % Step input in red dashed line
+plot(t_out, step_input, 'k-', 'LineWidth', 2); % Step input in black line
 title('Comparison of Step Input and Step Response');
 xlabel('Time (seconds)');
 ylabel('System Output (\Psi)');
@@ -55,6 +57,52 @@ legend('Step Response', 'Step Input');
 
 %% 2.2
 
+% Define the transfer function for the feedback system
+numerator = [1];
+denominator = [1, 0.5, 1];
+F = tf(numerator, denominator);
+
+% Display poles of the system
+poles = pole(F);
+disp('Poles of the system:');
+disp(poles);
+
+% Time vector from 0 to 20 seconds with 10^4 samples
+t = linspace(0, 20, 10^4);
+
+% Calculate the step response of the feedback system
+[y, t_out] = step(F, t);
+
+% Plotting the step response and the step input
+figure;
+plot(t_out, y, 'c-', 'LineWidth', 2);          % Step response in cyan
+hold on;
+plot(t_out, step_input, 'k-', 'LineWidth', 2); % Step input in black line
+title('Comparison of Step Input and Step Response with Feedback');
+xlabel('Time (seconds)');
+ylabel('System Output');
+legend('Step Response', 'Step Input');
+
+%% 2.3
+% Constants
+zeta = 0.25;  % Damping ratio
+omega_n = 1;  % Natural frequency
+
+% Time to Peak
+T_p = pi / (omega_n * sqrt(1 - zeta^2));
+
+% Settling Time (2% criterion)
+T_s = 4 / (zeta * omega_n);
+
+% Percentage Overshoot
+percent_OS = 100 * exp(-pi * zeta / sqrt(1 - zeta^2));
+
+% Display the results
+fprintf('Natural Frequency: %.2f rad/s\n', omega_n);
+fprintf('Damping Ratio: %.2f\n', zeta);
+fprintf('Time to Peak: %.2f s\n', T_p);
+fprintf('Settling Time: %.2f s\n', T_s);
+fprintf('Percentage Overshoot: %.2f%%\n', percent_OS);
 
 %% helper functions
 
