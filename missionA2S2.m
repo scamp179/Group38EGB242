@@ -8,18 +8,53 @@
 clear all; close all;
 
 % Begin writing your MATLAB solution below this line.
-samples = 10^4;
-tvec = linspace(0,20, samples +1);
-tvec(end) = [];
 
-gm = @(t) 2*(-2 + t + 2*exp(-0.5*t));
-gmvec = gm(tvec);
+%% 2.1
+% samples = 10^4;
+% tvec = linspace(0,20, samples +1);
+% tvec(end) = [];
+% 
+% gm = @(t) 2*(-2 + t + 2*exp(-0.5*t));
+% gmvec = gm(tvec);
+% 
+% figure;
+% plot(tvec, gmvec);
+% title('DC Motor System Step Response Output');
+% xlabel('Time (seconds)');
+% ylabel('Voltage Output (\Psi)');
 
+%% 2.1
+
+% Constants
+Km = 1;          % Motor constant
+alpha = 0.5;     % Motor time constant
+
+% Define Transfer Function G(s)
+s = tf('s');
+G = Km / (s * (s + alpha));
+
+% Time Vector
+samples = 10^4;  % Number of samples
+t = linspace(0, 20, samples);  % Time vector from 0 to 20 seconds
+
+% Calculate the Step Response of the System
+[y, t_out] = step(G, t);
+
+% Create the Step Input
+step_input = ones(size(t_out));  % Step input is 1 for all t
+
+% Plotting
 figure;
-plot(tvec, gmvec);
-title('DC Motor System Step Response Output');
+plot(t_out, y, 'b-', 'LineWidth', 2);         % Step response in blue
+hold on;
+plot(t_out, step_input, 'black-', 'LineWidth', 2); % Step input in red dashed line
+title('Comparison of Step Input and Step Response');
 xlabel('Time (seconds)');
-ylabel('Voltage Output (\Psi)');
+ylabel('System Output (\Psi)');
+legend('Step Response', 'Step Input');
+
+%% 2.2
+
 
 %% helper functions
 
