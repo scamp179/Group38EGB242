@@ -8,3 +8,16 @@
 clear all; close all;
 
 % Begin writing your MATLAB solution below this line.
+samples = 10^4;
+tvec = linspace(0,20, samples +1);
+tvec(end) = [];
+
+gm = @(t) 2*(-2 + t + 2*exp(-0.5*t));
+gmvec = gm(tvec);
+
+figure;
+plot(tvec, gmvec);
+title('DC Motor System Step Response Output');
+xlabel('Time (seconds)');
+ylabel('Voltage Output (\Psi)');
+
