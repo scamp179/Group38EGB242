@@ -105,75 +105,100 @@ fprintf('Settling Time: %.2f s\n', T_s);
 fprintf('Percentage Overshoot: %.2f%%\n'), percentage_OS
 
 %% 2.4
-% System Constants
-Gm = tf([1], [1, alpha, 0]);  % Motor and load transfer function Gm(s) = 1 / (s*(s + alpha))
-Hp = 1;  % Potentiometer gain (Hp(s) = 1 as Kpot = 1)
 
-% Array of gain values to test
-K_values = [0.1, 0.2, 0.5, 1, 2];
+Gm = tf([1], [1, alpha, 0]); % Transfer function Gm(s) = 1 / (s*(s + alpha))
+Hp = 1; % Potentiometer gain
 
-% Loop through each scenario
-for i = 1:2
-    figure;  % Create a new figure for each scenario
-    for K_gain = K_values
-        if i == 1
-            % Scenario 1: Vary K_fb with constant K_fwd = 1
-            K_fb = K_gain;
-            K_fwd = 1;
-            legendInfo = sprintf('K_{fb} = %g', K_fb);
-            titleInfo = 'Step Response with Varying K_{fb} (K_{fwd} = 1)';
-        else
-            % Scenario 2: Vary K_fwd with constant K_fb = 1
-            K_fwd = K_gain;
-            K_fb = 1;
-            legendInfo = sprintf('K_{fwd} = %g', K_fwd);
-            titleInfo = 'Step Response with Varying K_{fwd} (K_{fb} = 1)';
-        end
-        
-        % Closed-loop transfer function
-        F = Gm * K_fwd / (1 + Gm * Hp * K_fb);
-        
-        % Compute and plot the step response
-        [y, t_out] = step(F, t);
-        plot(t_out, y, 'DisplayName', legendInfo);
-        hold on;  % Hold on to plot multiple lines
-    end
-    
-    % Formatting the plots
-    title(titleInfo);
-    xlabel('Time (seconds)');
-    ylabel('System Output (\Psi)');
-    legend show;  % Show legends
+K_fb_values = [0.1, 0.2, 0.5, 1, 2]; % Feedback gain values
+K_fwd_values = [0.1, 0.2, 0.5, 1, 2]; % Forward gain values
+
+
+
+% Scenario 1: Varying K_fb with K_fwd = 1
+K_fwd = 1; % Constant forward gain
+figure;
+for K_fb = K_fb_values
+    F = Gm * K_fwd / (1 + Gm * Hp * K_fb); % Transfer function with feedback
+    [y, t_out] = step(F, t);
+    plot(t_out, y, 'DisplayName', sprintf('K_{fb} = %.1f', K_fb));
+    hold on;
 end
+title('Step Response with Varying K_{fb}, K_{fwd} = 1');
+xlabel('Time (seconds)');
+ylabel('System Output (\Psi)');
+legend('show');
+
+
+% Scenario 2: Varying K_fwd with K_fb = 1
+K_fb = 1; % Constant feedback gain
+figure;
+for K_fwd = K_fwd_values
+    F = Gm * K_fwd / (1 + Gm * Hp * K_fb); % Transfer function with forward gain
+    [y, t_out] = step(F, t);
+    plot(t_out, y, 'DisplayName', sprintf('K_{fwd} = %.1f', K_fwd));
+    hold on;
+end
+title('Step Response with Varying K_{fwd}, K_{fb} = 1');
+xlabel('Time (seconds)');
+ylabel('System Output (\Psi)');
+legend('show');
+
 
 %% 2.5 
 
-% % Damping ratio and time to peak
-% zeta_2 = 0.7;
-% T_p_2 = 13;  % Time to peak in seconds
+
+% Specifications
+zeta_2 = 0.7;           % Chosen damping ratio for controlled response
+T_p_2 = 13;             % Time to peak in seconds
+omega_n_2 = pi / (T_p_2 * sqrt(1 - zeta_2^2));  % Calculate natural frequency
+
+% Closed-Loop Transfer Function
+% Redefine Gm(s) to include omega_n and damping ratio zeta
+Gm_adjusted = tf([omega_n_2^2], [1, 2*zeta_2*omega_n_2, omega_n_2^2]);
+F = Gm_adjusted * K_fwd / (1 + Gm_adjusted * Hp * K_fb);  % Adjusted system
+
+% Simulation
+[y, t_out] = step(F, t);   % Step response
 % 
-% % Calculate the natural frequency omega_n
-% omega_n = pi / (T_p_2 * sqrt(1 - zeta_2^2));
-% 
-% % Define motor and load transfer function Gm(s)
-% Gm = tf([1], [1, alpha, 0]);
-% 
-% % Forward and feedback gains, assume ideal values for now
-% K_fwd = 1;  % This might be adjusted after further analysis
-% K_fb = 1;  % This might be adjusted after further analysis
-% 
-% % Define the transfer function with gains
-% F = Gm * K_fwd / (1 + Gm * 1 * K_fb);  % Using Kpot = 1 for H_p(s)
-% 
-% % Calculate and set the desired system parameters
-% desired_omega_n = omega_n;
-% desired_zeta = zeta_2;
-% 
-% % Store the transfer function object for the camera control system
-% cameraTF = F;
-% 
-% % Display the transfer function
-% disp(cameraTF);
+% Plotting
+figure;
+plot(t_out, y);
+title('Controlled Step Response of Camera System');
+xlabel('Time (seconds)');
+ylabel('Camera Position (Radians)');
+
+% Storing the Transfer Function
+cameraTF = F;  % Save transfer function for future use
+disp('Configured Camera Transfer Function:');
+disp(cameraTF);
+save('cameraTF.mat', 'cameraTF');
+
+%% 2.6
+
+% Constants
+deg_to_rad = pi / 180;  % Convert degrees to radians
+start_angle_deg = 30;   % Start angle in degrees
+end_angle_deg = 210;    % End angle in degrees
+
+% Convert angles to voltage (assuming linear relationship: 0V at 0°, 1V at 360°)
+start_voltage = start_angle_deg / 360;
+end_voltage = end_angle_deg / 360;
+
+% Ensure cameraTF is configured and loaded
+load cameraTF;  % This line assumes cameraTF is saved and needs to be loaded
+
+% Simulate the camera pan
+[startIm, finalIm] = cameraPan(start_voltage, end_voltage, cameraTF);
+
+% Display results
+figure;
+subplot(1,2,1);
+imshow(startIm);
+title('Starting Image at 30°');
+
+subplot(1,2,2);
+imshow(finalIm);
+title('Final Image at 210°');
 
 %% helper functions
 
