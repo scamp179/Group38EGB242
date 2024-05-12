@@ -95,14 +95,85 @@ T_p = pi / (omega_n * sqrt(1 - zeta^2));
 T_s = 4 / (zeta * omega_n);
 
 % Percentage Overshoot
-percent_OS = 100 * exp(-pi * zeta / sqrt(1 - zeta^2));
+percentage_OS = 100 * exp(-pi * zeta / sqrt(1 - zeta^2));
 
 % Display the results
 fprintf('Natural Frequency: %.2f rad/s\n', omega_n);
 fprintf('Damping Ratio: %.2f\n', zeta);
 fprintf('Time to Peak: %.2f s\n', T_p);
 fprintf('Settling Time: %.2f s\n', T_s);
-fprintf('Percentage Overshoot: %.2f%%\n', percent_OS);
+fprintf('Percentage Overshoot: %.2f%%\n'), percentage_OS
+
+%% 2.4
+% System Constants
+Gm = tf([1], [1, alpha, 0]);  % Motor and load transfer function Gm(s) = 1 / (s*(s + alpha))
+Hp = 1;  % Potentiometer gain (Hp(s) = 1 as Kpot = 1)
+
+% Array of gain values to test
+K_values = [0.1, 0.2, 0.5, 1, 2];
+
+% Loop through each scenario
+for i = 1:2
+    figure;  % Create a new figure for each scenario
+    for K_gain = K_values
+        if i == 1
+            % Scenario 1: Vary K_fb with constant K_fwd = 1
+            K_fb = K_gain;
+            K_fwd = 1;
+            legendInfo = sprintf('K_{fb} = %g', K_fb);
+            titleInfo = 'Step Response with Varying K_{fb} (K_{fwd} = 1)';
+        else
+            % Scenario 2: Vary K_fwd with constant K_fb = 1
+            K_fwd = K_gain;
+            K_fb = 1;
+            legendInfo = sprintf('K_{fwd} = %g', K_fwd);
+            titleInfo = 'Step Response with Varying K_{fwd} (K_{fb} = 1)';
+        end
+        
+        % Closed-loop transfer function
+        F = Gm * K_fwd / (1 + Gm * Hp * K_fb);
+        
+        % Compute and plot the step response
+        [y, t_out] = step(F, t);
+        plot(t_out, y, 'DisplayName', legendInfo);
+        hold on;  % Hold on to plot multiple lines
+    end
+    
+    % Formatting the plots
+    title(titleInfo);
+    xlabel('Time (seconds)');
+    ylabel('System Output (\Psi)');
+    legend show;  % Show legends
+end
+
+%% 2.5 
+
+% % Damping ratio and time to peak
+% zeta_2 = 0.7;
+% T_p_2 = 13;  % Time to peak in seconds
+% 
+% % Calculate the natural frequency omega_n
+% omega_n = pi / (T_p_2 * sqrt(1 - zeta_2^2));
+% 
+% % Define motor and load transfer function Gm(s)
+% Gm = tf([1], [1, alpha, 0]);
+% 
+% % Forward and feedback gains, assume ideal values for now
+% K_fwd = 1;  % This might be adjusted after further analysis
+% K_fb = 1;  % This might be adjusted after further analysis
+% 
+% % Define the transfer function with gains
+% F = Gm * K_fwd / (1 + Gm * 1 * K_fb);  % Using Kpot = 1 for H_p(s)
+% 
+% % Calculate and set the desired system parameters
+% desired_omega_n = omega_n;
+% desired_zeta = zeta_2;
+% 
+% % Store the transfer function object for the camera control system
+% cameraTF = F;
+% 
+% % Display the transfer function
+% disp(cameraTF);
 
 %% helper functions
 
