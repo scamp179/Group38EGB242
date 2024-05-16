@@ -6,7 +6,7 @@
 
 %% Initialise workspace
 clear all; close all;
-load DataA2 audioMultiplexNoisy fs sid;
+load DataA2 audioMultiplexNoisy fs sid; %% time domain 
 %% 1.1 
 % Compute the time vector using the helper function
 t = timevec(0, length(audioMultiplexNoisy)/fs, length(audioMultiplexNoisy));
@@ -15,19 +15,19 @@ t = timevec(0, length(audioMultiplexNoisy)/fs, length(audioMultiplexNoisy));
 f = freqvec(fs, length(audioMultiplexNoisy));
 
 % Compute the FFT of the audio signal
-audio_noisy_fft = fftshift(fft(audioMultiplexNoisy)) / fs; % this in frequency domain
+audio_noisy_fft = fftshift(fft(audioMultiplexNoisy)) / fs; % this in frequency domain Y(F)
 
 
 figure;
 
 subplot(2, 1, 1);
-plot(t, audioMultiplexNoisy);
+plot(t, audioMultiplexNoisy); %time domain
 title('Time Domain Representation of audioMultiplexNoisy');
 xlabel('Time (s)');
 ylabel('Amplitude');
 
 subplot(2, 1, 2);
-plot(f, abs(audio_noisy_fft));
+plot(f, abs(audio_noisy_fft)); %freq domain
 title('Frequency Domain Representation of audioMultiplexNoisy');
 xlabel('Frequency (Hz)');
 ylabel('Magnitude');
@@ -94,10 +94,10 @@ impulse = zeros(1, length(audio_noisy_fft));  % Vector of zeros
 impulse(1) = 1;  %sample signal x(t)          % Set the first sample to 1
 
 % Transmit the impulse through the channel
-output = channel(sid, impulse, fs); %y(t)
+output = channel(sid, impulse, fs); %y(t) = h(t)
 %%
 % Frequency response of the impulse response
-output_fft = fftshift(fft(output))/fs;  %Y(f)
+output_fft = fftshift(fft(output));  %Y(F) = H(F)
 
 figure;
 hold on;
@@ -110,43 +110,66 @@ ylabel('Magnitude');
 legend('Channel Impulse Response', 'Multiplexed Audio Signal');
 hold off;
 %% 1.4
+% we need to find X(F) of noisy audio
+noisy_fft = fftshift(fft(audioMultiplexNoisy)); % this in frequency domain Y(F)
 
-% Compute the FFT of the impulse response
-% H_Shift = fftshift(fft(H)) / fs;  % Use the length of audioMultiplexNoisy for padding
-% H_inv = 1 ./ H;  
-% H_inv(abs(H) < 1e-3) = 0;  % Avoid division by very small numbers to prevent amplifying noise
+%Y(F)/H(F) = X(F)
+Denoised = noisy_fft ./output_fft; % = X(F)
 
-%denoiseAudio = audio_noisy_fft ./ output_fft; not sure if needed
-% Apply the inverse filter
-audioMultiplexNoisy_fft = fftshift(fft(audioMultiplexNoisy)) / fs;
-audioFiltered_fft = audioMultiplexNoisy_fft .* H_inv;  % Now the sizes match
-audioFiltered = ifft(ifftshift(audioFiltered_fft));
+Denoised_ifft = ifft(ifftshift(Denoised))* fs; % x(t)
 
 
-audio_noisy_fft / output_fft; % denoised audio
-%impulse_fft = fftshift(fft(impulse))/fs; %X(f)
 
-%H = output_fft .* impulse_fft;
-% Plotting the frequency responses on the same axes
-% Plot the time domain
-figure;
-plot(t, audioFiltered);
-title('De-noised Audio - Time Domain');
-xlabel('Time (s)');
-ylabel('Amplitude');
+for idx = 1:length(carrierFreqs)
+    % Current carrier frequency
+    carrier_freq = carrierFreqs(idx);
 
-% Plot the frequency domain
-Y_filtered = fft(audioFiltered);
-f = (0:length(Y_filtered)-1)*(fs/length(Y_filtered));
-figure;
-plot(f, abs(Y_filtered));
-title('De-noised Audio - Frequency Domain');
-xlabel('Frequency (Hz)');
-ylabel('Magnitude');
-xlim([0 fs/2]);  % Only show up to Nyquist frequency
-% Begin writing your MATLAB solution below this line.
+    % cutoff frequency
+    fc = 2300; % try 3500 to compare
+    
+    % Demodulate the signal by multiplying it with a cosine wave of the carrier frequency.
+    demodulated_clean = Denoised_ifft .* cos(2*pi*carrier_freq*t);
+    
+    % Apply a low-pass filter to the demodulated signal to remove high-frequency components
+    demodulated_low = lowpass(demodulated_clean, fc, fs, Steepness=0.99);
+    % Store the demodulated, filtered audio for later use
+    % audioClean
+    audioCleanCell{idx} = demodulated_low; %time domain
 
-%% helper functions
+end
+
+% for idx = 1:length(audioCleanCell)
+% 
+%     % Store the demodulated, filtered audio for later use
+%     audioCleanCell_freq{idx} = demodulated_clean; %time domain
+
+% end
+% % % Plot the time domain
+% figure;
+% plot(t, audioFiltered);
+% title('De-noised Audio - Time Domain');
+% xlabel('Time (s)');
+% ylabel('Amplitude');
+% 
+% % Plot the frequency domain
+% Y_filtered = fft(audioFiltered);
+% f = (0:length(Y_filtered)-1)*(fs/length(Y_filtered));
+% figure;
+% plot(f, abs(Y_filtered));
+% title('De-noised Audio - Frequency Domain');
+% xlabel('Frequency (Hz)');
+% ylabel('Magnitude');
+% xlim([0 fs/2]);  % Only show up to Nyquist frequency
+%% Optional: Listen to each audioReceived after plotting
+for idx = 1:length(audioCleanCell)
+    sound(audioCleanCell{idx}, fs);
+    pause(length(audioCleanCell{idx})/fs + 1);  % Play each sound with a pause
+end
+
+%%
+% % Begin writing your MATLAB solution below this line.
+% 
+% %% helper functions
 
 % function definitions in matlab either need to be in their own file,
 % or can be in at the bottom of a script.
