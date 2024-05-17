@@ -59,6 +59,7 @@ for idx = 1:length(carrierFreqs)
     audioReceivedCell{idx} = audioReceived;
 
     audioReceived_shift = fftshift(fft(audioReceived))/fs;
+    audioReceivedCell{idx+length(carrier_freq)} = audioReceived_shift;
     
     % Plot the filtered (received) audio signal.
     figure;
@@ -79,12 +80,12 @@ for idx = 1:length(carrierFreqs)
 
 end
 
-
-%% Optional: Listen to each audioReceived after plotting
-% for idx = 1:length(audioReceivedCell)
-%     sound(audioReceivedCell{idx}, fs);
-%     pause(length(audioReceivedCell{idx})/fs + 1);  % Play each sound with a pause
-% end
+%%
+%Optional: Listen to each audioReceived after plotting
+for idx = 1:length(audioReceivedCell)/2
+    sound(audioReceivedCell{idx}, fs);
+    pause(length(audioReceivedCell{idx})/fs + 1);  % Play each sound with a pause
+end
 
 %% 1.3 Model the frequency-dependent distortion
 
