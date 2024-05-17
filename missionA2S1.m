@@ -17,9 +17,7 @@ f = freqvec(fs, length(audioMultiplexNoisy));
 % Compute the FFT of the audio signal
 audio_noisy_fft = fftshift(fft(audioMultiplexNoisy)) / fs;
 
-
 figure;
-
 subplot(2, 1, 1);
 plot(t, audioMultiplexNoisy);
 title('Time Domain Representation of audioMultiplexNoisy');
@@ -159,10 +157,10 @@ end
 
 %%
 % Optional: Listen to each audioReceived after plotting
-for idx = 1:length(audioReceivedCell)/2
-    sound(audioReceivedCell{idx}, fs);
-    pause(length(audioReceivedCell{idx})/fs + 1);  % Play each sound with a pause
-end
+% for idx = 1:length(audioReceivedCell)/2
+%     sound(audioReceivedCell{idx}, fs);
+%     pause(length(audioReceivedCell{idx})/fs + 1);  % Play each sound with a pause
+% end
 %% 1.5 denoise the signal tone frequency
 noise_freq = 2040;
 
