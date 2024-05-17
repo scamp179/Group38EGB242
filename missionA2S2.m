@@ -47,13 +47,14 @@ step_input = ones(size(t_out));  % Step input is 1 for all t
 
 % Plotting
 figure;
-plot(t_out, y, 'c-', 'LineWidth', 2);          % Step response in cyan
+plot(t_out, y);          % Step response in cyan
 hold on;
-plot(t_out, step_input, 'k-', 'LineWidth', 2); % Step input in black line
+plot(t_out, step_input); % Step input in black line
 title('Comparison of Step Input and Step Response');
 xlabel('Time (seconds)');
 ylabel('System Output (\Psi)');
-legend('Step Response', 'Step Input');
+legend({'Step Response', 'Step Input'}, 'Location', 'northeast');
+
 
 %% 2.2
 
@@ -75,13 +76,13 @@ t = linspace(0, 20, 10^4);
 
 % Plotting the step response and the step input
 figure;
-plot(t_out, y, 'c-', 'LineWidth', 2);          % Step response in cyan
+plot(t_out, y);         
 hold on;
-plot(t_out, step_input, 'k-', 'LineWidth', 2); % Step input in black line
+plot(t_out, step_input); 
 title('Comparison of Step Input and Step Response with Feedback');
 xlabel('Time (seconds)');
 ylabel('System Output');
-legend('Step Response', 'Step Input');
+legend({'Step Response', 'Step Input'}, 'Location', 'northeast');
 
 %% 2.3
 % Constants
@@ -126,7 +127,7 @@ end
 title('Step Response with Varying K_{fb}, K_{fwd} = 1');
 xlabel('Time (seconds)');
 ylabel('System Output (\Psi)');
-legend('show');
+legend('show', 'Location', 'best');
 
 
 % Scenario 2: Varying K_fwd with K_fb = 1
