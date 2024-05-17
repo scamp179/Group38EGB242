@@ -127,7 +127,7 @@ for idx = 1:length(carrierFreqs)
     carrier_freq = carrierFreqs(idx);
 
     % cutoff frequency
-    fc = 2300; % try 3500 to compare
+    fc = 2000; % try 3500 to compare
     
     % Demodulate the signal by multiplying it with a cosine wave of the carrier frequency.
     demodulated_clean = Denoised_ifft .* cos(2*pi*carrier_freq*t);
@@ -158,11 +158,15 @@ for idx = 1:length(carrierFreqs)
 end
 
 %%
-%Optional: Listen to each audioReceived after plotting
-% for idx = 1:length(audioReceivedCell)/2
-%     sound(audioReceivedCell{idx}, fs);
-%     pause(length(audioReceivedCell{idx})/fs + 1);  % Play each sound with a pause
-% end
+% Optional: Listen to each audioReceived after plotting
+for idx = 1:length(audioReceivedCell)/2
+    sound(audioReceivedCell{idx}, fs);
+    pause(length(audioReceivedCell{idx})/fs + 1);  % Play each sound with a pause
+end
+%% 1.5 denoise the signal tone frequency
+noise_freq = 2040;
+
+
 
 %% helper functions
 
