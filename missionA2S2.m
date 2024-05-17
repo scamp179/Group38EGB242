@@ -47,13 +47,14 @@ step_input = ones(size(t_out));  % Step input is 1 for all t
 
 % Plotting
 figure;
-plot(t_out, y, 'c-', 'LineWidth', 2);          % Step response in cyan
+plot(t_out, y);          % Step response in cyan
 hold on;
-plot(t_out, step_input, 'k-', 'LineWidth', 2); % Step input in black line
+plot(t_out, step_input); % Step input in black line
 title('Comparison of Step Input and Step Response');
 xlabel('Time (seconds)');
 ylabel('System Output (\Psi)');
-legend('Step Response', 'Step Input');
+legend({'Step Response', 'Step Input'}, 'Location', 'northeast');
+
 
 %% 2.2
 
@@ -75,13 +76,13 @@ t = linspace(0, 20, 10^4);
 
 % Plotting the step response and the step input
 figure;
-plot(t_out, y, 'c-', 'LineWidth', 2);          % Step response in cyan
+plot(t_out, y);         
 hold on;
-plot(t_out, step_input, 'k-', 'LineWidth', 2); % Step input in black line
+plot(t_out, step_input); 
 title('Comparison of Step Input and Step Response with Feedback');
 xlabel('Time (seconds)');
 ylabel('System Output');
-legend('Step Response', 'Step Input');
+legend({'Step Response', 'Step Input'}, 'Location', 'northeast');
 
 %% 2.3
 % Constants
@@ -95,14 +96,110 @@ T_p = pi / (omega_n * sqrt(1 - zeta^2));
 T_s = 4 / (zeta * omega_n);
 
 % Percentage Overshoot
-percent_OS = 100 * exp(-pi * zeta / sqrt(1 - zeta^2));
+percentage_OS = 100 * exp(-pi * zeta / sqrt(1 - zeta^2));
 
 % Display the results
 fprintf('Natural Frequency: %.2f rad/s\n', omega_n);
 fprintf('Damping Ratio: %.2f\n', zeta);
 fprintf('Time to Peak: %.2f s\n', T_p);
 fprintf('Settling Time: %.2f s\n', T_s);
-fprintf('Percentage Overshoot: %.2f%%\n', percent_OS);
+fprintf('Percentage Overshoot: %.2f%%\n'), percentage_OS
+
+%% 2.4
+
+Gm = tf([1], [1, alpha, 0]); % Transfer function Gm(s) = 1 / (s*(s + alpha))
+Hp = 1; % Potentiometer gain
+
+K_fb_values = [0.1, 0.2, 0.5, 1, 2]; % Feedback gain values
+K_fwd_values = [0.1, 0.2, 0.5, 1, 2]; % Forward gain values
+
+
+
+% Scenario 1: Varying K_fb with K_fwd = 1
+K_fwd = 1; % Constant forward gain
+figure;
+for K_fb = K_fb_values
+    F = Gm * K_fwd / (1 + Gm * Hp * K_fb); % Transfer function with feedback
+    [y, t_out] = step(F, t);
+    plot(t_out, y, 'DisplayName', sprintf('K_{fb} = %.1f', K_fb));
+    hold on;
+end
+title('Step Response with Varying K_{fb}, K_{fwd} = 1');
+xlabel('Time (seconds)');
+ylabel('System Output (\Psi)');
+legend('show', 'Location', 'best');
+
+
+% Scenario 2: Varying K_fwd with K_fb = 1
+K_fb = 1; % Constant feedback gain
+figure;
+for K_fwd = K_fwd_values
+    F = Gm * K_fwd / (1 + Gm * Hp * K_fb); % Transfer function with forward gain
+    [y, t_out] = step(F, t);
+    plot(t_out, y, 'DisplayName', sprintf('K_{fwd} = %.1f', K_fwd));
+    hold on;
+end
+title('Step Response with Varying K_{fwd}, K_{fb} = 1');
+xlabel('Time (seconds)');
+ylabel('System Output (\Psi)');
+legend('show');
+
+
+%% 2.5 
+
+
+% Specifications
+zeta_2 = 0.7;           % Chosen damping ratio for controlled response
+T_p_2 = 13;             % Time to peak in seconds
+omega_n_2 = pi / (T_p_2 * sqrt(1 - zeta_2^2));  % Calculate natural frequency
+
+% Closed-Loop Transfer Function
+% Redefine Gm(s) to include omega_n and damping ratio zeta
+Gm_adjusted = tf([omega_n_2^2], [1, 2*zeta_2*omega_n_2, omega_n_2^2]);
+F = Gm_adjusted * K_fwd / (1 + Gm_adjusted * Hp * K_fb);  % Adjusted system
+
+% Simulation
+[y, t_out] = step(F, t);   % Step response
+% 
+% Plotting
+figure;
+plot(t_out, y);
+title('Controlled Step Response of Camera System');
+xlabel('Time (seconds)');
+ylabel('Camera Position (Radians)');
+
+% Storing the Transfer Function
+cameraTF = F;  % Save transfer function for future use
+disp('Configured Camera Transfer Function:');
+disp(cameraTF);
+save('cameraTF.mat', 'cameraTF');
+
+%% 2.6
+
+% Constants
+deg_to_rad = pi / 180;  % Convert degrees to radians
+start_angle_deg = 30;   % Start angle in degrees
+end_angle_deg = 210;    % End angle in degrees
+
+% Convert angles to voltage (assuming linear relationship: 0V at 0°, 1V at 360°)
+start_voltage = start_angle_deg / 360;
+end_voltage = end_angle_deg / 360;
+
+% Ensure cameraTF is configured and loaded
+load cameraTF;  % This line assumes cameraTF is saved and needs to be loaded
+
+% Simulate the camera pan
+[startIm, finalIm] = cameraPan(start_voltage, end_voltage, cameraTF);
+
+% Display results
+figure;
+subplot(1,2,1);
+imshow(startIm);
+title('Starting Image at 30°');
+
+subplot(1,2,2);
+imshow(finalIm);
+title('Final Image at 210°');
 
 %% helper functions
 
