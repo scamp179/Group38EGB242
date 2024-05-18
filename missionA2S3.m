@@ -66,10 +66,45 @@ ltiview(H2)
 
 %Use Active Filter 1 to remove noise
 %% 3.4
-G = @(s) (1 / (R*C)^2)/(s^2 + 2*s/(R*C) + 1/(R*C)^2);
-syms t v s
-V = v*exp(-s*t);
-Vs = int(V)
+s = tf('s');
+G = transferFunction;
+
+im1D_Filtered = lsim(G, im1D, t);
+im1D_F_Shift = fftshift(fft(im1D_Filtered)) / fs;
+
+figure;
+
+subplot(2, 1, 1);
+plot(t, im1D_Filtered);
+title('Time Domain Representation of Filtered Image Signal');
+xlabel('Time (s)');
+ylabel('Amplitude');
+
+subplot(2, 1, 2);
+plot(f, abs(im1D_F_Shift));
+title('Frequency Domain Representation of Filtered Image Signal');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
+
+% Converting a received pixel stream to an image matrix
+im2D_Filtered = reshape(im1D_Filtered, numRows, numCols);
+
+% Displaying an image in a figure
+figure;
+imshow(im2D_Filtered);
+
+%% 3.5
+for i = 2:height(imagesReceived)
+    im1D = imagesReceived(i,:);
+    im1D_Filtered = lsim(G, im1D, t);
+
+    % Converting a received pixel stream to an image matrix
+    im2D_Filtered = reshape(im1D_Filtered, numRows, numCols);
+    
+    % Displaying an image in a figure
+    figure;
+    imshow(im2D_Filtered);
+end
 %% helper functions
 
 % function definitions in matlab either need to be in their own file,
