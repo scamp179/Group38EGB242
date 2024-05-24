@@ -10,6 +10,7 @@ load DataA2 imagesReceived;
 
 % Begin writing your MATLAB solution below this line.
 %% 3.1
+% Declare variables
 im1D = imagesReceived(1,:);
 numRows = 480;
 numCols = 640;
@@ -25,15 +26,17 @@ imshow(im2D ) ;
 imwrite(im2D , 'pic1.png' ) ;
 
 %% 3.2
-
+% Declare Vavirables
 fs = 1000;
 T = length(im1D) / fs;
 N = length(im1D);
 t = timevec(0,T,N);
 f = freqvec(fs, N);
 
+% Convert signal to frequency domain
 shift_im1D = fftshift(fft(im1D)) / fs;
 
+% Plot signal in time and frequency domain
 figure;
 
 subplot(2, 1, 1);
@@ -49,61 +52,63 @@ xlabel('Frequency (Hz)');
 ylabel('Magnitude');
 
 %% 3.3
+% Declare variables
 R = 820;
 C = 1e-6;
-R1 = 1200;
-R2 = 1000;
-C1 = 10e-6;
-C2 = 4.7e-6;
 
 s = tf('s');
+% Declare s and t vectors
 s_vec = linspace(0,500,5000);
 t_vec = linspace(0,0.01,1000);
 
-pf1tf = 1/(1/R1*(R1+R2+1/(s*C2)*(1/(s*C1)+R1)+R1));
-
+% Construct Transfer Function for Active filter 1
 num = [1 / (R*C)^2];
 den = [1, 2/(R*C), 1 / (R*C)^2];
 transferFunction = (1 / (R*C)^2)/(s^2 + (2*s/(R*C)) + (1/(R*C)^2));
-tf_func = @(s) (1 / (R*C)^2)./(s.^2 + (2.*s./(R*C)) + (1/(R*C)^2));
+H = tf(num, den);
+
+% Declare Step response of both active filters
 af1_step = @(t) 1 - exp(-50000.*t./41) - (50000/41)*exp(-50000.*t./41).*t;
 af2_step = @(t) exp(-50000.*t./41) - (50000/41)*exp(-50000.*t./41).*t;
-tf_v = tf_func(s_vec);
 af1_step_v = af1_step(t_vec);
 af2_step_v = af2_step(t_vec);
+
+% Plot Step Response of both active filters
 figure
 hold on
 plot(t_vec, af1_step_v)
 plot(t_vec, af2_step_v)
 title('Active Filters Step Response')
+xlabel('Time (s)')
+ylabel('Amplitude')
 legend('Active Filter 1', 'Active Filter 2','Location','best')
 hold off
 %%
-H = tf(num, den);
-
+% Plot LTI Sytem analysis for Active filter 1
 ltiview(H)
 bode(H)
-pole(H)
 
+% Contruct transfer function for Active filter 2
 num2 = [1, 0, 0];
 transferFunction2 = s^2/(s^2 + 2*s/(R*C) + 1/(R*C)^2);
-tf2_func = @(s) s.^2./((s.^2) + ((2.*s)./(R*C)) + (1/(R*C)^2));
-tf2_v = tf2_func(s_vec);
-figure
-plot(s_vec, tf2_v)
-title('Active Filter 2')
 H2 = tf(num2, den);
-bode(H2)
+
+% Plot LTI Sytem analysis for Active filter 2
 ltiview(H2)
+bode(H2)
 
 %Use Active Filter 1 to remove noise
 %% 3.4
+% Declare Active Filter 1 for application with image signal
 s = tf_func('s');
 G = transferFunction;
 
+% Filter signal
 im1D_Filtered = lsim(G, im1D, t);
+% Shift into frequency domain
 im1D_F_Shift = fftshift(fft(im1D_Filtered)) / fs;
 
+% Plot filtered image signal in time and frequency domain
 figure;
 
 subplot(2, 1, 1);
@@ -126,6 +131,7 @@ figure;
 imshow(im2D_Filtered);
 
 %% 3.5
+% Apply filter to all received images
 for i = 2:height(imagesReceived)
     im1D = imagesReceived(i,:);
     im1D_Filtered = lsim(G, im1D, t);
